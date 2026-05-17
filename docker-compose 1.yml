@@ -1,0 +1,81 @@
+version: "3.9"
+
+# ── NutriOS local development stack ──────────────────────────
+# Usage:
+#   cp .env.example .env          # fill in real values
+#   docker compose up --build     # first run
+#   docker compose up             # subsequent runs
+#
+# Run migrations after first boot:
+#   docker compose exec api alembic upgrade head
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     nutrios
+      POSTGRES_PASSWORD: nutrios
+      POSTGRES_DB:       nutrios
+    ports:
+      - "5432:5432"      # expose for local tools (DBeaver, psql)
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutrios -d nutrios"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── FastAPI backend ─────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL:  postgresql://nutrios:nutrios@db:5432/nutrios
+      BOT_TOKEN:     ${BOT_TOKEN}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      JWT_SECRET:    ${JWT_SECRET:-nutrios-dev-secret-change-me}
+      MINIAPP_DIR:   /miniapp
+    volumes:
+      # Mount miniapp/ so the API serves static files without rebuilding
+      - ./miniapp:/miniapp:ro
+      # Hot-reload: mount backend source (remove in production)
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+  # ── Telegram bot ─────────────────────────────────────────────
+  bot:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      BOT_TOKEN:     ${BOT_TOKEN}
+      MINI_APP_URL:  ${MINI_APP_URL:-http://localhost:8000/static/index.html}
+      # WEBHOOK_URL not set → bot runs in polling mode (ideal for local dev)
+    depends_on:
+      - api
+    command: python /app/bot.py
+    volumes:
+      # bot.py sits at project root; mount it into the container
+      - ./bot.py:/app/bot.py:ro
+
+
+# ── Volumes ───────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local

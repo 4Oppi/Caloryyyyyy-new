@@ -1,0 +1,733 @@
+/* ============================================================
+   NutriOS — Dark iOS-style Telegram Mini App
+   Mobile-first, 375px base (iPhone standard)
+   ============================================================ */
+
+/* ── 1. CSS Variables ─────────────────────────────────────── */
+:root {
+  --bg:              #000000;
+  --card:            #1C1C1E;
+  --card-elevated:   #2C2C2E;
+  --primary:         #007AFF;
+  --primary-light:   #5AC8FA;
+  --success:         #34C759;
+  --warning:         #FF9500;
+  --danger:          #FF453A;
+  --text:            #FFFFFF;
+  --text-secondary:  #8E8E93;
+  --text-tertiary:   #636366;
+  --separator:       #38383A;
+}
+
+/* ── 2. Reset ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── 3. Body ──────────────────────────────────────────────── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  line-height: 1.4;
+  overflow-x: hidden;
+  padding-bottom: 90px;
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ── 3a. Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar { display: none; }
+
+/* ── 4. Typography ────────────────────────────────────────── */
+h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+h2 { font-size: 22px; font-weight: 600; }
+h3 { font-size: 20px; font-weight: 600; }
+small { font-size: 13px; color: var(--text-secondary); }
+p { line-height: 1.5; }
+
+/* ── 5. Layout ────────────────────────────────────────────── */
+.screen {
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.hidden { display: none !important; }
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 16px;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.field-group {
+  margin-bottom: 4px;
+}
+
+/* ── 6. Buttons ───────────────────────────────────────────── */
+button { cursor: pointer; font-family: inherit; }
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 17px;
+  font-weight: 600;
+  width: 100%;
+  margin: 8px 0;
+  transition: transform 0.1s, opacity 0.1s;
+}
+.btn-primary:active { transform: scale(0.96); opacity: 0.85; }
+
+.btn-secondary {
+  background: var(--card-elevated);
+  color: var(--text);
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 17px;
+  font-weight: 500;
+  width: 100%;
+  margin: 8px 0;
+  transition: transform 0.1s, opacity 0.1s;
+}
+.btn-secondary:active { transform: scale(0.96); opacity: 0.85; }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 17px;
+  font-weight: 600;
+  width: 100%;
+  margin: 8px 0;
+  transition: transform 0.1s, opacity 0.1s;
+}
+.btn-danger:active { transform: scale(0.96); opacity: 0.85; }
+
+.btn-text {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  padding: 0;
+  width: auto;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ── 7. Inputs & Selects ──────────────────────────────────── */
+input, select {
+  background: var(--card-elevated);
+  border: none;
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 17px;
+  font-family: inherit;
+  width: 100%;
+  margin: 8px 0;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: box-shadow 0.2s;
+}
+input:focus, select:focus {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+input::placeholder { color: var(--text-secondary); }
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 12px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* ── 8. Calorie Ring ──────────────────────────────────────── */
+.calorie-card {
+  text-align: center;
+}
+
+.calorie-ring-wrap {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  position: relative;
+}
+
+svg.calorie-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+circle.ring-bg {
+  fill: none;
+  stroke: var(--card-elevated);
+  stroke-width: 8;
+}
+
+circle.ring-progress {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 251.2;   /* 2π × r=40 */
+  stroke-dashoffset: 251.2;  /* fully "empty" by default; JS updates this */
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+              stroke 0.4s ease;
+}
+
+.calorie-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.cal-remaining {
+  font-size: 36px;
+  font-weight: 700;
+  display: block;
+  line-height: 1.1;
+}
+
+.macro-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+  gap: 16px;
+}
+
+.macro-item {
+  text-align: center;
+}
+
+.macro-item > span {
+  font-size: 20px;
+  font-weight: 600;
+  display: block;
+}
+
+.macro-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--separator);
+}
+
+/* ── 9. Quick Actions ─────────────────────────────────────── */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 12px 16px;
+}
+
+.action-btn {
+  background: var(--card-elevated);
+  border: none;
+  border-radius: 12px;
+  padding: 14px 8px;
+  text-align: center;
+  color: var(--text);
+  font-family: inherit;
+  transition: transform 0.1s, opacity 0.1s;
+}
+.action-btn:active { transform: scale(0.94); opacity: 0.8; }
+
+.action-icon {
+  font-size: 26px;
+  display: block;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.action-btn small {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ── 10. Water Tracker ────────────────────────────────────── */
+.water-glasses {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 12px 0 8px;
+  flex-wrap: wrap;
+}
+
+.water-glass {
+  width: 30px;
+  height: 42px;
+  background: var(--card-elevated);
+  border-radius: 4px 4px 8px 8px;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s;
+  cursor: pointer;
+}
+
+.water-glass::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: var(--primary);
+  border-radius: 0 0 8px 8px;
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.water-glass.filled::after { height: 100%; }
+
+/* ── 11. Progress Bars ────────────────────────────────────── */
+.progress-bar-wrap {
+  height: 8px;
+  background: var(--card-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 4px;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+.steps-bar { background: var(--success); }
+
+/* ── 12. Streak Card ──────────────────────────────────────── */
+.streak-card {
+  background: linear-gradient(135deg, var(--warning), var(--danger));
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.streak-flame { font-size: 32px; }
+
+.streak-info { display: flex; flex-direction: column; }
+
+.streak-number {
+  font-size: 24px;
+  font-weight: 700;
+  display: block;
+  line-height: 1.1;
+}
+
+.streak-info small { color: rgba(255,255,255,0.8); }
+
+/* ── 13. Meals List ───────────────────────────────────────── */
+.meal-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--separator);
+}
+
+.meal-item:last-child { border-bottom: none; }
+
+.meal-left { flex: 1; }
+
+.meal-name { font-weight: 500; font-size: 15px; }
+
+.meal-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  background: var(--card-elevated);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+
+.meal-cal {
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px 0;
+  font-size: 15px;
+}
+
+/* ── 14. Bottom Nav ───────────────────────────────────────── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(28, 28, 30, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  justify-content: space-around;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--separator);
+  z-index: 100;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: inherit;
+  flex: 1;
+  text-align: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.nav-btn > span {
+  font-size: 24px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.nav-btn.active { color: var(--primary); }
+
+/* ── 15. Modals ───────────────────────────────────────────── */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.modal:not(.hidden) {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: var(--card);
+  width: 100%;
+  max-width: 430px;
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal:not(.hidden) .modal-content { transform: translateY(0); }
+
+.modal-handle {
+  width: 36px;
+  height: 5px;
+  background: var(--text-tertiary);
+  border-radius: 3px;
+  margin: 0 auto 16px;
+}
+
+.modal-hint {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ── 16. Onboarding ───────────────────────────────────────── */
+.onboarding-step {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 24px 32px;
+  text-align: center;
+}
+
+.onboarding-logo {
+  font-size: 72px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.onboarding-step .subtitle {
+  color: var(--text-secondary);
+  font-size: 17px;
+  margin: 8px 0 40px;
+}
+
+.onboarding-step h2 {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.onboarding-step .btn-primary { margin-top: 32px; }
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: var(--text-tertiary);
+  border-radius: 50%;
+  transition: width 0.3s, background 0.3s, border-radius 0.3s;
+}
+
+.dot.active {
+  background: var(--primary);
+  width: 24px;
+  border-radius: 4px;
+}
+
+.optional {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── 17. Header ───────────────────────────────────────────── */
+.header {
+  padding: 16px 16px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.header h1 {
+  font-size: 24px;
+  margin-bottom: 2px;
+}
+
+.header-date {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.header-streak {
+  background: var(--card-elevated);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* ── 18. Loading & Toast ──────────────────────────────────── */
+.loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.loading p { color: var(--text-secondary); font-size: 15px; }
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--card-elevated);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast {
+  position: fixed;
+  top: calc(20px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: var(--card-elevated);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 12px;
+  z-index: 400;
+  font-size: 15px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── 19. Stats Grid ───────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.stat-box {
+  background: var(--card-elevated);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-box > span {
+  font-size: 24px;
+  font-weight: 700;
+  display: block;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+/* ── 20. Scan ─────────────────────────────────────────────── */
+.scan-upload-area {
+  border: 2px dashed var(--text-tertiary);
+  border-radius: 16px;
+  padding: 36px 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  margin: 12px 0;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.scan-upload-area > span { font-size: 40px; display: block; margin-bottom: 8px; }
+.scan-upload-area > small { font-size: 14px; }
+.scan-upload-area:active { background: var(--card-elevated); border-color: var(--primary); }
+
+.scan-preview {
+  width: 100%;
+  border-radius: 12px;
+  margin: 12px 0;
+  max-height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.scan-result {
+  background: var(--card-elevated);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.scan-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.scan-food-label { font-size: 18px; font-weight: 600; }
+
+.scan-cal-badge {
+  background: var(--primary);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scan-confidence {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+/* ── 21. Profile Info ─────────────────────────────────────── */
+.profile-info-rows { margin-top: 8px; }
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--separator);
+}
+
+.profile-row:last-child { border-bottom: none; }
+
+.profile-label { color: var(--text-secondary); font-size: 15px; }
+
+.profile-value { font-weight: 500; font-size: 15px; }
+
+/* ── 23. Chart placeholder ────────────────────────────────── */
+.chart-placeholder {
+  height: 150px;
+  background: var(--card-elevated);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  gap: 8px;
+}
+
+.chart-placeholder > span { font-size: 32px; }
+
+/* ── AI suggestion text ───────────────────────────────────── */
+.ai-text {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-top: 8px;
+}

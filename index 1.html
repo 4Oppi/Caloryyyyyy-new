@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#000000" />
+  <title>NutriOS</title>
+
+  <!-- Telegram Mini App SDK — must load before app.js -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ================================================================
+       ONBOARDING  (4 steps, shown only on first launch)
+  ================================================================ -->
+  <div id="onboarding" class="screen hidden">
+
+    <!-- Step 1 — Welcome -->
+    <div class="onboarding-step" id="step-1">
+      <div class="onboarding-logo">🥗</div>
+      <h1>NutriOS</h1>
+      <p class="subtitle">Ovqat va kaloriyalarni kuzatish</p>
+      <button class="btn-primary" onclick="nextStep(2)">Boshlash</button>
+    </div>
+
+    <!-- Step 2 — Personal info -->
+    <div class="onboarding-step hidden" id="step-2">
+      <div class="step-indicator"><span class="dot active"></span><span class="dot"></span><span class="dot"></span></div>
+      <h2>Shaxsiy ma'lumotlar</h2>
+      <div class="field-group">
+        <label>Jinsingiz</label>
+        <select id="gender">
+          <option value="male">Erkak</option>
+          <option value="female">Ayol</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Yoshingiz</label>
+        <input type="number" id="age" placeholder="25" min="10" max="100" inputmode="numeric" />
+      </div>
+      <button class="btn-primary" onclick="nextStep(3)">Davom etish</button>
+    </div>
+
+    <!-- Step 3 — Body measurements -->
+    <div class="onboarding-step hidden" id="step-3">
+      <div class="step-indicator"><span class="dot"></span><span class="dot active"></span><span class="dot"></span></div>
+      <h2>Parametrlar</h2>
+      <div class="field-group">
+        <label>Bo'y (sm)</label>
+        <input type="number" id="height" placeholder="175" min="100" max="250" inputmode="numeric" />
+      </div>
+      <div class="field-group">
+        <label>Vazn (kg)</label>
+        <input type="number" id="weight" placeholder="70" min="30" max="300" inputmode="decimal" />
+      </div>
+      <div class="field-group">
+        <label>Maqsadli vazn (kg) <span class="optional">ixtiyoriy</span></label>
+        <input type="number" id="target-weight" placeholder="65" min="30" max="300" inputmode="decimal" />
+      </div>
+      <button class="btn-primary" onclick="nextStep(4)">Davom etish</button>
+    </div>
+
+    <!-- Step 4 — Activity & goal -->
+    <div class="onboarding-step hidden" id="step-4">
+      <div class="step-indicator"><span class="dot"></span><span class="dot"></span><span class="dot active"></span></div>
+      <h2>Faollik va maqsad</h2>
+      <div class="field-group">
+        <label>Faollik darajasi</label>
+        <select id="activity">
+          <option value="sedentary">Kam harakatli (stol ishi)</option>
+          <option value="light">Yengil (haftada 1–3 kun sport)</option>
+          <option value="moderate" selected>O'rtacha (haftada 3–5 kun)</option>
+          <option value="active">Faol (haftada 6–7 kun)</option>
+          <option value="very_active">Juda faol (jismoniy ish)</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Maqsad</label>
+        <select id="goal">
+          <option value="lose_weight">⬇️ Vazn yo'qotish</option>
+          <option value="maintain" selected>➡️ Vaznni ushlab turish</option>
+          <option value="gain_muscle">⬆️ Mushak o'stirish</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="submitOnboarding()">Tayyor ✓</button>
+    </div>
+
+  </div><!-- /#onboarding -->
+
+
+  <!-- ================================================================
+       MAIN APP  (hidden until auth + onboarding done)
+  ================================================================ -->
+  <div id="app" class="screen hidden">
+
+    <!-- Header -->
+    <div class="header">
+      <div>
+        <h1 id="greeting">Assalomu alaykum!</h1>
+        <p id="date" class="header-date">Bugun</p>
+      </div>
+      <div class="header-streak" id="header-streak" title="Ketma-ket kunlar">
+        🔥 <span id="header-streak-count">0</span>
+      </div>
+    </div>
+
+    <!-- ── HOME TAB ──────────────────────────────────────────────── -->
+    <div id="tab-home" class="tab active">
+
+      <!-- Calorie ring card -->
+      <div class="card calorie-card">
+        <div class="calorie-ring-wrap">
+          <svg class="calorie-ring" viewBox="0 0 100 100">
+            <circle class="ring-bg"       cx="50" cy="50" r="40" />
+            <circle class="ring-progress" cx="50" cy="50" r="40" id="calorie-progress" />
+          </svg>
+          <div class="calorie-center">
+            <span id="calories-remaining" class="cal-remaining">0</span>
+            <small>kcal qoldi</small>
+          </div>
+        </div>
+        <div class="macro-row">
+          <div class="macro-item">
+            <span id="calories-eaten">0</span>
+            <small>Yeyildi</small>
+          </div>
+          <div class="macro-divider"></div>
+          <div class="macro-item">
+            <span id="calories-goal">2000</span>
+            <small>Maqsad</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick action buttons -->
+      <div class="quick-actions">
+        <button class="action-btn" onclick="showAddMeal()">
+          <span class="action-icon">＋</span>
+          <small>Ovqat</small>
+        </button>
+        <button class="action-btn" onclick="showScan()">
+          <span class="action-icon">📷</span>
+          <small>Skan</small>
+        </button>
+        <button class="action-btn" onclick="addWater()">
+          <span class="action-icon">💧</span>
+          <small>Suv</small>
+        </button>
+        <button class="action-btn" onclick="showSteps()">
+          <span class="action-icon">👟</span>
+          <small>Qadam</small>
+        </button>
+      </div>
+
+      <!-- Water tracker -->
+      <div class="card">
+        <div class="card-header-row">
+          <h3>💧 Suv</h3>
+          <span id="water-text" class="card-subtitle">0 / 2500 ml</span>
+        </div>
+        <div class="water-glasses" id="water-glasses">
+          <!-- 8 glass icons rendered by JS -->
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="water-progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- Steps -->
+      <div class="card">
+        <div class="card-header-row">
+          <h3>👟 Qadamlar</h3>
+          <span id="steps-text" class="card-subtitle">0 / 10 000</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar steps-bar" id="steps-progress-bar"></div>
+        </div>
+      </div>
+
+      <!-- Streak banner -->
+      <div class="card streak-card">
+        <span class="streak-flame">🔥</span>
+        <div class="streak-info">
+          <span id="streak-count" class="streak-number">0</span>
+          <small>kun ketma-ket</small>
+        </div>
+      </div>
+
+      <!-- Today's meals list -->
+      <div class="card">
+        <div class="card-header-row">
+          <h3>🍽 Bugungi ovqatlar</h3>
+          <button class="btn-text" onclick="showAddMeal()">+ Qo'shish</button>
+        </div>
+        <div id="meals-list">
+          <p class="empty-state">Hali ovqat kiritilmagan</p>
+        </div>
+      </div>
+
+    </div><!-- /#tab-home -->
+
+
+    <!-- ── PROGRESS TAB ──────────────────────────────────────────── -->
+    <div id="tab-progress" class="tab hidden">
+
+      <div class="card">
+        <h3>⚖️ Vazn tarixi</h3>
+        <div id="weight-chart" class="chart-placeholder">
+          <span>📈</span>
+          <small>Grafik tez orada</small>
+        </div>
+        <div class="field-group" style="margin-top:12px">
+          <input type="number" id="new-weight" placeholder="Yangi vazn (kg)" inputmode="decimal" />
+          <button class="btn-primary" onclick="addWeight()">Saqlash</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📊 Haftalik statistika</h3>
+        <div id="weekly-stats" class="stats-grid">
+          <div class="stat-box"><span id="week-avg-cal">–</span><small>Ort. kcal</small></div>
+          <div class="stat-box"><span id="week-streak">–</span><small>Streak</small></div>
+          <div class="stat-box"><span id="week-water">–</span><small>Suv (ml)</small></div>
+          <div class="stat-box"><span id="week-steps">–</span><small>Qadam</small></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🤖 AI Tavsiya</h3>
+        <p id="ai-suggestion" class="ai-text">Bugun protein yetarli emas. Ko'proq go'sht, tuxum yoki dukkakli o'simliklar iste'mol qiling.</p>
+      </div>
+
+    </div><!-- /#tab-progress -->
+
+
+    <!-- ── SETTINGS TAB ──────────────────────────────────────────── -->
+    <div id="tab-settings" class="tab hidden">
+
+      <div class="card">
+        <h3>⚙️ Maqsadlarni sozlash</h3>
+        <div class="field-group">
+          <label>Kunlik kaloriya maqsadi</label>
+          <input type="number" id="setting-calories" placeholder="2000" inputmode="numeric" />
+        </div>
+        <div class="field-group">
+          <label>Suv maqsadi (ml)</label>
+          <input type="number" id="setting-water" placeholder="2500" inputmode="numeric" />
+        </div>
+        <div class="field-group">
+          <label>Qadam maqsadi</label>
+          <input type="number" id="setting-steps" placeholder="10000" inputmode="numeric" />
+        </div>
+        <button class="btn-primary" onclick="saveSettings()">Saqlash</button>
+      </div>
+
+      <div class="card">
+        <h3>👤 Profil</h3>
+        <div id="profile-info" class="profile-info-rows">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <div class="card">
+        <button class="btn-danger" onclick="logout()">Chiqish</button>
+      </div>
+
+    </div><!-- /#tab-settings -->
+
+
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" onclick="switchTab('home')" id="nav-home">
+        <span>🏠</span><small>Asosiy</small>
+      </button>
+      <button class="nav-btn" onclick="switchTab('progress')" id="nav-progress">
+        <span>📊</span><small>Progress</small>
+      </button>
+      <button class="nav-btn" onclick="switchTab('settings')" id="nav-settings">
+        <span>⚙️</span><small>Sozlamalar</small>
+      </button>
+    </nav>
+
+  </div><!-- /#app -->
+
+
+  <!-- ================================================================
+       MODALS
+  ================================================================ -->
+
+  <!-- Add Meal modal -->
+  <div id="modal-add-meal" class="modal hidden" onclick="handleModalBackdrop(event,'modal-add-meal')">
+    <div class="modal-content">
+      <div class="modal-handle"></div>
+      <h3>Ovqat qo'shish</h3>
+      <div class="field-group">
+        <label>Ovqat nomi</label>
+        <input type="text" id="meal-name" placeholder="Masalan: Osh, Banan..." />
+      </div>
+      <div class="field-group">
+        <label>Kaloriya (kcal)</label>
+        <input type="number" id="meal-calories" placeholder="300" inputmode="numeric" />
+      </div>
+      <div class="field-group">
+        <label>Vaqt</label>
+        <select id="meal-type">
+          <option value="breakfast">🌅 Nonushta</option>
+          <option value="lunch">☀️ Tushlik</option>
+          <option value="dinner">🌙 Kechki ovqat</option>
+          <option value="snack">🍎 Perekus</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="submitMeal()">✓ Qo'shish</button>
+      <button class="btn-secondary" onclick="closeModal('modal-add-meal')">Bekor qilish</button>
+    </div>
+  </div>
+
+  <!-- AI Scan modal -->
+  <div id="modal-scan" class="modal hidden" onclick="handleModalBackdrop(event,'modal-scan')">
+    <div class="modal-content">
+      <div class="modal-handle"></div>
+      <h3>📷 Ovqatni skanerlash</h3>
+      <p class="modal-hint">Ovqat rasmini yuklang — AI kaloriyalarni aniqlaydi</p>
+
+      <div id="scan-upload-area" class="scan-upload-area" onclick="document.getElementById('scan-file').click()">
+        <span>📸</span>
+        <small>Rasm tanlash yoki suratga olish</small>
+        <input type="file" id="scan-file" accept="image/*" capture="environment"
+               style="display:none" onchange="previewScanImage(event)" />
+      </div>
+      <img id="scan-preview" class="scan-preview hidden" alt="Preview" />
+
+      <button class="btn-primary" id="btn-scan-submit" onclick="submitScan()">Skanerlash</button>
+
+      <!-- Scan result (shown after API response) -->
+      <div id="scan-result" class="scan-result hidden">
+        <div class="scan-result-row">
+          <span class="scan-food-label" id="scan-food-name"></span>
+          <span class="scan-cal-badge" id="scan-calories"></span>
+        </div>
+        <p class="scan-confidence" id="scan-confidence"></p>
+        <select id="scan-meal-type">
+          <option value="breakfast">🌅 Nonushta</option>
+          <option value="lunch">☀️ Tushlik</option>
+          <option value="dinner">🌙 Kechki ovqat</option>
+          <option value="snack">🍎 Perekus</option>
+        </select>
+        <button class="btn-primary" onclick="confirmScan()">✅ Saqlash</button>
+        <button class="btn-secondary" onclick="resetScan()">🔄 Qayta skanerlash</button>
+      </div>
+
+      <button class="btn-secondary" onclick="closeModal('modal-scan')">Yopish</button>
+    </div>
+  </div>
+
+  <!-- Steps modal -->
+  <div id="modal-steps" class="modal hidden" onclick="handleModalBackdrop(event,'modal-steps')">
+    <div class="modal-content">
+      <div class="modal-handle"></div>
+      <h3>👟 Qadamlar</h3>
+      <p class="modal-hint">Bugungi jami qadamlar sonini kiriting</p>
+      <div class="field-group">
+        <input type="number" id="steps-input" placeholder="8000" inputmode="numeric" />
+      </div>
+      <button class="btn-primary" onclick="submitSteps()">Saqlash</button>
+      <button class="btn-secondary" onclick="closeModal('modal-steps')">Bekor qilish</button>
+    </div>
+  </div>
+
+
+  <!-- ================================================================
+       GLOBAL LOADING OVERLAY
+  ================================================================ -->
+  <div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <p>Yuklanmoqda...</p>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
